@@ -1,0 +1,23 @@
+Enable preview mode hug_parens_with_braces_and_square_brackets.
+
+From: Charles <peacech@gmail.com>
+
+
+---
+ src/black/linegen.py |    3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/src/black/linegen.py b/src/black/linegen.py
+index 35bdd4b..9543431 100644
+--- a/src/black/linegen.py
++++ b/src/black/linegen.py
+@@ -870,8 +870,7 @@ def _first_right_hand_split(
+ 
+     body: Optional[Line] = None
+     if (
+-        Preview.hug_parens_with_braces_and_square_brackets in line.mode
+-        and tail_leaves[0].value
++        tail_leaves[0].value
+         and tail_leaves[0].opening_bracket is head_leaves[-1]
+     ):
+         inner_body_leaves = list(body_leaves)

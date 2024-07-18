@@ -1,0 +1,22 @@
+Default to single quote.
+
+From: Charles <peacech@gmail.com>
+
+
+---
+ src/black/strings.py |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/black/strings.py b/src/black/strings.py
+index 69a8c80..00cb770 100644
+--- a/src/black/strings.py
++++ b/src/black/strings.py
+@@ -234,7 +234,7 @@ def normalize_string_quotes(s: str) -> str:
+     if new_escape_count > orig_escape_count:
+         return s  # Do not introduce more escaping
+ 
+-    if new_escape_count == orig_escape_count and orig_quote == '"':
++    if new_escape_count == orig_escape_count and orig_quote == "'":
+         return s  # Prefer double quotes
+ 
+     return f"{prefix}{new_quote}{new_body}{new_quote}"

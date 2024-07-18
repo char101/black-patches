@@ -1,0 +1,6 @@
+# This series applies on Git commit 721dff549362f54930ecc038218dcc40e599a875
+01-single-quote.patch
+02-enable-hug_parens_with_braces_and_square_brackets.patch
+03-no-blank-lines-around-nested-functions.patch
+04-disable-adding-parantheses-over-two-tuple-elements.patch
+05-dont-split-function-parameters.patch

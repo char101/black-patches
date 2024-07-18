@@ -1,0 +1,22 @@
+Disable adding optional parantheses over two or more tuple elements.
+
+From: Charles <peacech@gmail.com>
+
+
+---
+ src/black/lines.py |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/black/lines.py b/src/black/lines.py
+index aacd624..b803526 100644
+--- a/src/black/lines.py
++++ b/src/black/lines.py
+@@ -969,7 +969,7 @@ def can_omit_invisible_parens(
+ 
+     max_priority = bt.max_delimiter_priority()
+     delimiter_count = bt.delimiter_count_with_priority(max_priority)
+-    if delimiter_count > 1:
++    if delimiter_count > 100:
+         # With more than one delimiter of a kind the optional parentheses read better.
+         return False
+ 

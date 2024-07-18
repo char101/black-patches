@@ -1,0 +1,47 @@
+Don't split function parameters.
+
+From: Charles <peacech@gmail.com>
+
+
+---
+ src/black/linegen.py |   20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/src/black/linegen.py b/src/black/linegen.py
+index 2ba838c..c20ea80 100644
+--- a/src/black/linegen.py
++++ b/src/black/linegen.py
+@@ -862,6 +862,8 @@ def _first_right_hand_split(
+     body_leaves.reverse()
+     head_leaves.reverse()
+ 
++    # ic(head_leaves, body_leaves, tail_leaves)
++
+     body: Optional[Line] = None
+     if (
+         True # Preview.hug_parens_with_braces_and_square_brackets in line.mode
+@@ -885,6 +887,24 @@ def _first_right_hand_split(
+             hugged_opening_leaves.append(inner_body_leaves.pop(0))
+             hugged_closing_leaves.insert(0, inner_body_leaves.pop())
+ 
++        # hug parameters in function call
++        # hug only if not already hugged above and last head node is '('
++        if not hugged_opening_leaves and len(head_leaves) > 1 and head_leaves[-1].type == token.LPAR and head_leaves[-2].type == token.NAME:
++            #ic(str(line), len(head_leaves))
++            #ic(head_leaves[-2])
++            # don't hug if there are comments
++            has_comment = False
++            # for leaf in inner_body_leaves:
++            #     if leaf.type == STANDALONE_COMMENT or line.comments_after(leaf):
++            #         has_comment = True
++            #         break
++            # ic(has_comment, inner_body_leaves[0])
++            if not has_comment:
++                while inner_body_leaves and (not hugged_opening_leaves or hugged_opening_leaves[-1].type != token.LBRACE):
++                    hugged_opening_leaves.append(inner_body_leaves.pop(0))
++                while inner_body_leaves and (not hugged_closing_leaves or hugged_closing_leaves[0].type != token.RBRACE):
++                    hugged_closing_leaves.insert(0, inner_body_leaves.pop())
++
+         if hugged_opening_leaves and inner_body_leaves:
+             inner_body = bracket_split_build_line(
+                 inner_body_leaves,

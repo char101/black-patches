@@ -1,0 +1,141 @@
+Don't wrap long line containing only simple assignment.
+
+From: Charles <peacech@gmail.com>
+
+Doesn't work when Improved string processing preview mode is enabled.
+---
+ src/black/_modutils.py |   88 ++++++++++++++++++++++++++++++++++++++++++++++++
+ src/black/linegen.py   |   10 ++++-
+ 2 files changed, 96 insertions(+), 2 deletions(-)
+ create mode 100644 src/black/_modutils.py
+
+diff --git a/src/black/_modutils.py b/src/black/_modutils.py
+new file mode 100644
+index 0000000..802fcfc
+--- /dev/null
++++ b/src/black/_modutils.py
+@@ -0,0 +1,88 @@
++from typing import List
++
++from blib2to3.pgen2 import token
++from blib2to3.pytree import Leaf
++from black.lines import Line
++
++
++def can_skip_line_wrapping(line: Line) -> bool:
++    """
++    Only "simple" lines are eligible for opting out of line wrapping.
++
++    Some examples of "simple" lines:
++        - var = "yes"
++        - var = "hello"     " world"
++        - var = "very very very very very very very very very long string"
++        - var.attr.c.d = "very very very very very very very very long string"
++
++    The last element of the line, except for the comment, must be a string.
++
++    Some examples of "non-simple" lines:
++        - var = "hello" + "world"
++        - lookUp["key"] = "hello world"
++
++    For a more comprehensive list of examples, go to `test_lingen.py` and
++    check out the test cases.
++    """
++    return False
++    if len(line.comments) > 0:
++        # As long as there are any comments, we don't consider this `line`
++        # eligible for opting out, i.e., we fall back to Black's default
++        # behaviors.
++        #
++        # If we don't fall back, there will be conflicts with Black's
++        # experimental features ("--preview").
++        return False
++
++    if len(line.leaves) == 0:
++        return False
++
++    # LPAR and RPAR are added during node visiting (in `lines.visit(src_node)`)
++    if line.leaves[-1].type == token.RPAR:
++        leaves = _clone_leaves(line.leaves[:-1])
++        has_rpar = True
++    else:
++        leaves = _clone_leaves(line.leaves)
++        has_rpar = False
++
++    if len(leaves) == 0 or not _is_string(leaves[-1]):
++        return False
++
++    while len(leaves) > 0:  # check leaf by leaf from right hand side
++        leaves = leaves[:-1]
++        if len(leaves) == 0:
++            break  # note: all([]) is True
++
++        if _is_string(leaves[-1]):
++            continue
++
++        if has_rpar and leaves[-1].type == token.LPAR:
++            has_rpar = False
++            continue
++
++        if not _is_equal_operators(leaves[-1]):
++            return False
++
++        leaves = leaves[:-1]
++        break
++
++    return all(_is_name_or_dot(_) for _ in leaves)
++
++
++def _clone_leaves(leaves: List[Leaf]) -> List[Leaf]:
++    return [_.clone() for _ in leaves]
++
++
++def _is_string(leaf: Leaf) -> bool:
++    return leaf.type == token.STRING
++
++
++def _is_equal_operators(leaf: Leaf) -> bool:
++    if leaf.type == token.EQUAL:
++        return True
++
++    return 37 <= leaf.type <= 47
++
++
++def _is_name_or_dot(leaf: Leaf) -> bool:
++    return leaf.type in {token.NAME, token.DOT}
+diff --git a/src/black/linegen.py b/src/black/linegen.py
+index 46945ca..35bdd4b 100644
+--- a/src/black/linegen.py
++++ b/src/black/linegen.py
+@@ -82,6 +82,8 @@ from black.trans import (
+ from blib2to3.pgen2 import token
+ from blib2to3.pytree import Leaf, Node
+ 
++from black._modutils import can_skip_line_wrapping
++
+ # types
+ LeafID = int
+ LN = Union[Leaf, Node]
+@@ -626,6 +628,8 @@ def transform_line(
+     string_split = StringSplitter(ll, sn)
+     string_paren_wrap = StringParenWrapper(ll, sn)
+ 
++    _can_skip_line_wrapping = can_skip_line_wrapping(line)
++
+     transformers: List[Transformer]
+     if (
+         not line.contains_uncollapsable_type_comments()
+@@ -699,9 +703,11 @@ def transform_line(
+                 ]
+         else:
+             if line.inside_brackets:
+-                transformers = [delimiter_split, standalone_comment_split, rhs]
++                transformers = [delimiter_split, standalone_comment_split]
+             else:
+-                transformers = [rhs]
++                transformers = []
++            if not _can_skip_line_wrapping:
++                transformers.append(rhs)
+     # It's always safe to attempt hugging of power operations and pretty much every line
+     # could match.
+     transformers.append(hug_power_op)

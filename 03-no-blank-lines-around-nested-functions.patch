@@ -1,0 +1,32 @@
+Don't add blank lines around nested functions.
+
+From: Charles <peacech@gmail.com>
+
+
+---
+ src/black/lines.py |    5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/src/black/lines.py b/src/black/lines.py
+index b9b3add..aacd624 100644
+--- a/src/black/lines.py
++++ b/src/black/lines.py
+@@ -655,7 +655,7 @@ class EmptyLineTracker:
+                     before = 1
+             else:
+                 if depth:
+-                    before = 1
++                    before = 1 if user_had_newline else 0
+                 elif (
+                     not depth
+                     and previous_def.depth
+@@ -758,6 +758,9 @@ class EmptyLineTracker:
+                 newlines = 0
+         else:
+             newlines = 1 if current_line.depth else 2
++            # don't add newlines nefore nested def
++            if (current_line.is_def or current_line.is_decorator) and current_line.depth > 1: # nested function inside class (depth > 1)
++                newlines = 1 if user_had_newline else 0
+             # If a user has left no space after a dummy implementation, don't insert
+             # new lines. This is useful for instance for @overload or Protocols.
+             if self.previous_line.is_stub_def and not user_had_newline:
